@@ -9,9 +9,25 @@ public class VisualActivityTest
     {
         assertEquals(0, VisualActivity.floorCount(0, 300, 0));
         assertEquals(1, VisualActivity.floorCount(25, 300, 1));
-        assertEquals(100, VisualActivity.floorCount(50, 300, 4));
+        assertEquals(7, VisualActivity.floorCount(50, 300, 4));
         assertEquals(300, VisualActivity.floorCount(100, 300, 12));
         assertEquals(0, VisualActivity.floorCount(100, 0, 12));
+    }
+
+    @Test public void largeScenesHaveGentleLowEndAndMonotonicCoverage()
+    {
+        assertEquals(1, VisualActivity.floorCount(25, 10000, 1));
+        assertEquals(1, VisualActivity.floorCount(26, 10000, 1));
+        assertEquals(1, VisualActivity.floorCount(27, 10000, 1));
+        assertEquals(2, VisualActivity.floorCount(30, 10000, 1));
+        int previous = 1;
+        for (int level = 26; level <= 100; level++)
+        {
+            int count = VisualActivity.floorCount(level, 10000, 1);
+            org.junit.Assert.assertTrue(count >= previous && count <= 10000);
+            previous = count;
+        }
+        assertEquals(10000, previous);
     }
     @Test public void supportsQuietOriginalAndDenseActivity()
     {

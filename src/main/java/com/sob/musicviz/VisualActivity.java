@@ -25,7 +25,9 @@ final class VisualActivity
     static int floorCount(int activity, int available, int eventCount)
     {
         if (eventCount == 0 || available == 0) return 0;
-        double coverage = Math.max(0, Math.min(75, activity - 25)) / 75.0;
-        return Math.min(available, Math.max(1, (int) Math.ceil(available * coverage)));
+        double progress = Math.max(0, Math.min(75, activity - 25)) / 75.0;
+        // Scale target counts proportionally, rather than adding a percentage of the
+        // entire scene per step. This keeps 25 -> 26 gentle even at a large radius.
+        return Math.min(available, Math.max(1, (int) Math.round(Math.pow(available, progress))));
     }
 }
