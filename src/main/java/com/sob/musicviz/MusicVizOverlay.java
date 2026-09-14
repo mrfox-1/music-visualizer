@@ -8,7 +8,6 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import javax.inject.Inject;
 import net.runelite.api.Client;
-import net.runelite.api.GameObject;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -47,9 +46,10 @@ class MusicVizOverlay extends Overlay
 
     private void drawFlash(Graphics2D g, FlashState flash, long now, int decay, int peakAlpha)
     {
-        GameObject obj = flash.target;
-        Shape hull = obj.getConvexHull();
+        Shape hull = flash.target.shape(client);
         if (hull == null) return;
+
+        if (flash.target.floor != null) peakAlpha = config.floorAlpha();
 
         float p = flash.progress(now, decay);
         int alpha = (int) (peakAlpha * (1f - p));

@@ -1,6 +1,17 @@
 # Music Visualizer
 
-A RuneLite plugin that paints the music onto the game world. Nearby in-game objects flash on the notes of the currently playing OSRS music track — color picked from the note's pitch, target picked from objects within a configurable radius of the player.
+A RuneLite plugin that paints music onto the game world. Nearby scenery or floor tiles flash to OSRS MIDI notes or Windows PC playback audio, within a configurable radius of the player. OSRS music and scenery remain the defaults.
+
+## PC audio and floor tiles
+
+- Select **Audio source → Source → PC audio** to visualize sound playing through the Windows default playback device. The plugin uses WASAPI loopback inside RuneLite; no microphone, recording-device selection, Stereo Mix, or companion app is required. Adjust **Audio sensitivity** and use the status overlay to check the signal level.
+- Select **Display → Flash targets → Floor tiles** or **Both**. Both triggers one scenery object and one floor tile per event. Tiles share the radius, colors, selection mode, and decay settings, with a separate **Floor tile opacity** setting (default 60).
+
+PC mode automatically reconnects when the default playback device changes. Apps explicitly routed to a different output are not included. Exclusive-mode or protected playback may not be available. OSRS music mode remains available on other platforms.
+
+PC audio is analyzed at the playback device's native sample rate using a windowed FFT. Energy changes in bass, midrange, and treble trigger flashes, and spectral peaks determine the colors. This estimates musical activity rather than transcribing individual notes or instruments. Capture and analysis run on a background worker; scene targeting runs on RuneLite's client thread. No audio is saved or transmitted.
+
+Floor highlights use projected tile polygons, like tile-marker overlays; they are not depth-tested changes to ground materials. Unloaded tiles and tiles outside the current plane or radius are excluded. Targets are cleared on scene transitions, and multi-tile scenery objects are deduplicated.
 
 ## How it works
 
@@ -23,7 +34,20 @@ This mapping is sometimes called a **chromatic circle** and has a long history i
 
 ## Sync
 
-A `Sync offset (ms)` slider lets you nudge the visualization forward or backward to match what you hear. Each new track resyncs automatically.
+A `Sync offset (ms)` slider lets you nudge the OSRS MIDI visualization forward or backward to match what you hear. Each new track resyncs automatically. MIDI channel selection and MIDI sync offset do not apply to PC audio.
+
+## Development
+
+Use JDK 17 with the included Gradle wrapper:
+
+```sh
+./gradlew test jar
+./gradlew run
+```
+
+On Windows use `gradlew.bat`. The `run` task launches the development client with assertions enabled. The JAR bundles JNA 5.9.0 and its native bridge resources for Windows loopback capture. JNA's bundled license files are retained. This native integration needs RuneLite Plugin Hub review before distribution there.
+
+Automated tests cover audio formats, native sample rates, silence, stereo/surround audio, event rate limiting, and floor/scenery selection. `LoopbackSmoke.main` is an optional manual Windows check: it captures four seconds of current playback, prints only levels/event counts, and verifies worker shutdown. It does not play or save audio. In-game rendering and device switching should also be checked manually.
 
 ## Data collection
 

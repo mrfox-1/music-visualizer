@@ -1,15 +1,14 @@
 package com.sob.musicviz;
 
 import java.awt.Color;
-import net.runelite.api.GameObject;
 
 final class FlashState
 {
-    final GameObject target;
+    final FlashTarget target;
     final long startMs;
     final Color color;
 
-    FlashState(GameObject target, long startMs, Color color)
+    FlashState(FlashTarget target, long startMs, Color color)
     {
         this.target = target;
         this.startMs = startMs;

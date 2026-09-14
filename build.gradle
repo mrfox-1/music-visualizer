@@ -13,7 +13,11 @@ repositories {
 
 def runeLiteVersion = 'latest.release'
 
+configurations { audioBridge }
+
 dependencies {
+    audioBridge 'net.java.dev.jna:jna:5.9.0'
+    implementation 'net.java.dev.jna:jna:5.9.0'
     compileOnly group: 'net.runelite', name: 'client', version: runeLiteVersion
 
     compileOnly 'org.projectlombok:lombok:1.18.30'
@@ -25,11 +29,25 @@ dependencies {
 }
 
 group = 'com.sob.musicviz'
-version = '0.0.1'
+version = '0.0.2'
 
 sourceCompatibility = '11'
 targetCompatibility = '11'
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+tasks.register('run', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.sob.musicviz.MusicVizPluginTest'
+    enableAssertions = true
+    args '--developer-mode'
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from { configurations.audioBridge.collect { zipTree(it) } }
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
 }

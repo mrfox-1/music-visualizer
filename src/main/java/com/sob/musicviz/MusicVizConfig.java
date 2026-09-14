@@ -10,6 +10,32 @@ import net.runelite.client.config.Units;
 @ConfigGroup("musicviz")
 public interface MusicVizConfig extends Config
 {
+    @ConfigSection(name = "Audio source", description = "Choose OSRS music or PC playback", position = -1)
+    String audioSection = "audioSection";
+
+    @ConfigItem(keyName = "audioSource", name = "Source",
+        description = "PC audio reacts to sound playing through your Windows default headphones or speakers. No input selection needed.",
+        section = audioSection, position = 0)
+    default AudioSource audioSource() { return AudioSource.OSRS_MIDI; }
+
+    @Range(min = 1, max = 100)
+    @ConfigItem(keyName = "audioSensitivity", name = "Audio sensitivity",
+        description = "Higher values react to quieter audio. Applies only to PC audio.",
+        section = audioSection, position = 2)
+    default int audioSensitivity() { return 50; }
+
+    @ConfigItem(keyName = "showAudioStatus", name = "Show audio status",
+        description = "Show capture status and setup errors while using PC audio.",
+        section = audioSection, position = 3)
+    default boolean showAudioStatus() { return true; }
+
+    enum AudioSource
+    {
+        OSRS_MIDI, PC_AUDIO;
+
+        @Override public String toString() { return this == PC_AUDIO ? "PC audio" : "OSRS music"; }
+    }
+
     @ConfigSection(
         name = "Heads-up: first-song lag",
         description = "OSRS doesn't tell us how far into a track it currently is, so the first song after enabling the plugin (or after login) starts visualizing from the MIDI's beginning — even though the audio is already partway through. Every subsequent track change resyncs automatically.",
@@ -65,6 +91,27 @@ public interface MusicVizConfig extends Config
         section = displaySection, position = 3
     )
     default SelectionMode selectionMode() { return SelectionMode.HASH_BY_NOTE; }
+
+    @ConfigItem(keyName = "targetType", name = "Flash targets",
+        description = "Scenery, floor tiles, or one of each per note. Uses the radius and target-selection settings.",
+        section = displaySection, position = 4)
+    default TargetType targetType() { return TargetType.SCENERY; }
+
+    @Range(min = 0, max = 255)
+    @ConfigItem(keyName = "floorAlpha", name = "Floor tile opacity",
+        description = "Peak floor-tile fill opacity. Lower values keep the ground easy to see.",
+        section = displaySection, position = 5)
+    default int floorAlpha() { return 60; }
+
+    enum TargetType
+    {
+        SCENERY, FLOOR_TILES, BOTH;
+
+        @Override public String toString()
+        {
+            return this == SCENERY ? "Scenery" : this == FLOOR_TILES ? "Floor tiles" : "Both";
+        }
+    }
 
     @Range(min = -1, max = 15)
     @ConfigItem(

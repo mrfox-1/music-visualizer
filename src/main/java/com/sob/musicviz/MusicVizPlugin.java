@@ -10,13 +10,13 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
-import net.runelite.api.GameObject;
 import net.runelite.api.MidiRequest;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -24,8 +24,8 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 @PluginDescriptor(
     name = "Music Visualizer",
-    description = "Flashes nearby objects on the notes of the current music track.",
-    tags = {"music", "visualizer", "overlay", "midi"}
+    description = "Flashes nearby scenery or floor tiles to OSRS music or Windows PC audio.",
+    tags = {"music", "visualizer", "overlay", "midi", "audio", "tiles"}
 )
 public class MusicVizPlugin extends Plugin
 {
@@ -34,6 +34,7 @@ public class MusicVizPlugin extends Plugin
     @Inject private MusicVizConfig config;
     @Inject private OverlayManager overlayManager;
     @Inject private MusicVizOverlay overlay;
+    @Inject private AudioStatusOverlay audioStatusOverlay;
     @Inject private MidiScheduler scheduler;
     @Inject private ObjectScanner scanner;
     @Inject private FlashStore flashes;
@@ -44,23 +45,81 @@ public class MusicVizPlugin extends Plugin
     private volatile int lastArchiveId = Integer.MIN_VALUE;
     private final Random rr = new Random();
     private int rrCursor = 0;
+    private volatile boolean running;
+    private volatile long sourceGeneration;
+    private volatile PcAudioCapture pcAudio;
+
+    PcAudioCapture pcAudio() { return pcAudio; }
 
     @Override
     protected void startUp()
     {
         overlayManager.add(overlay);
-        scheduler.start(this::onNote);
-        startPolling();
+        overlayManager.add(audioStatusOverlay);
+        running = true;
+        restartSource();
     }
 
     @Override
     protected void shutDown()
     {
-        stopPolling();
-        scheduler.stop();
+        running = false;
+        stopSource();
         overlayManager.remove(overlay);
+        overlayManager.remove(audioStatusOverlay);
         flashes.clear();
         lastArchiveId = Integer.MIN_VALUE;
+    }
+
+    @Subscribe
+    public void onConfigChanged(ConfigChanged event)
+    {
+        if (!"musicviz".equals(event.getGroup())) return;
+        String key = event.getKey();
+        if ("targetType".equals(key) || "radius".equals(key))
+        {
+            clientThread.invoke(() -> {
+                if (running) { flashes.clear(); scanner.refresh(config.radius(), config.targetType()); }
+            });
+        }
+        if ("audioSource".equals(key)
+            || "pollIntervalMs".equals(key) || "syncOffsetMs".equals(key))
+        {
+            clientThread.invoke(() -> { if (running) restartSource(); });
+        }
+    }
+
+    private void stopSource()
+    {
+        sourceGeneration++;
+        stopPolling();
+        scheduler.stop();
+        if (pcAudio != null) { pcAudio.stop(); pcAudio = null; }
+        lastArchiveId = Integer.MIN_VALUE;
+        flashes.clear();
+        scanner.clear();
+    }
+
+    private void restartSource()
+    {
+        stopSource();
+        long generation = sourceGeneration;
+        clientThread.invoke(() -> {
+            if (running && generation == sourceGeneration) scanner.refresh(config.radius(), config.targetType());
+        });
+        java.util.function.Consumer<NoteEvent> sink = event -> clientThread.invoke(() -> {
+            if (running && generation == sourceGeneration) onNote(event);
+        });
+        if (config.audioSource() == MusicVizConfig.AudioSource.PC_AUDIO)
+        {
+            pcAudio = new PcAudioCapture();
+            pcAudio.start(config::audioSensitivity, sink);
+        }
+        else
+        {
+            scheduler.start(sink);
+            startPolling();
+        }
     }
 
     @Provides
@@ -72,14 +131,14 @@ public class MusicVizPlugin extends Plugin
     @Subscribe
     public void onGameStateChanged(GameStateChanged ev)
     {
-        // Currently no-op — scheduler holds its own clock. We may want to
-        // clear flashes on logout so they don't linger on the login screen.
+        flashes.clear();
+        scanner.clear();
     }
 
     @Subscribe
     public void onGameTick(GameTick ev)
     {
-        scanner.refresh(config.radius());
+        scanner.refresh(config.radius(), config.targetType());
     }
 
     private void startPolling()
@@ -107,6 +166,7 @@ public class MusicVizPlugin extends Plugin
      */
     private void pollActiveTrack()
     {
+        if (!running || config.audioSource() != MusicVizConfig.AudioSource.OSRS_MIDI) return;
         try
         {
             List<MidiRequest> active = client.getActiveMidiRequests();
@@ -140,6 +200,7 @@ public class MusicVizPlugin extends Plugin
     private void parseAsync(int archiveId, byte[] cacheBytes, long startNanos)
     {
         if (pollExec == null) return;
+        long generation = sourceGeneration;
         if (cacheBytes == null)
         {
             if (config.logCacheMisses())
@@ -154,8 +215,13 @@ public class MusicVizPlugin extends Plugin
             {
                 List<NoteEvent> events = MidiTrackResolver.flatten(cacheBytes);
                 log.debug("musicviz: parsed {} note events from archive {}", events.size(), archiveId);
-                scheduler.loadTrack(events, startNanos);
-                flashes.clear();
+                clientThread.invoke(() -> {
+                    if (running && generation == sourceGeneration && archiveId == lastArchiveId)
+                    {
+                        scheduler.loadTrack(events, startNanos);
+                        flashes.clear();
+                    }
+                });
             }
             catch (Throwable t)
             {
@@ -167,8 +233,17 @@ public class MusicVizPlugin extends Plugin
     private void onNote(NoteEvent ev)
     {
         int wantedChannel = config.melodyChannel();
-        if (wantedChannel >= 0 && ev.channel != wantedChannel) return;
-        List<GameObject> targets = scanner.get();
+        if (config.audioSource() == MusicVizConfig.AudioSource.OSRS_MIDI
+            && wantedChannel >= 0 && ev.channel != wantedChannel) return;
+        int cursor = rrCursor++;
+        if (config.targetType() != MusicVizConfig.TargetType.FLOOR_TILES)
+            flashOne(scanner.scenery(), ev, cursor);
+        if (config.targetType() != MusicVizConfig.TargetType.SCENERY)
+            flashOne(scanner.floors(), ev, cursor);
+    }
+
+    private void flashOne(List<FlashTarget> targets, NoteEvent ev, int cursor)
+    {
         if (targets.isEmpty()) return;
 
         int idx;
@@ -178,14 +253,14 @@ public class MusicVizPlugin extends Plugin
                 idx = (int) Math.floorMod((long) ev.note * 2654435761L, targets.size());
                 break;
             case ROUND_ROBIN:
-                idx = Math.floorMod(rrCursor++, targets.size());
+                idx = Math.floorMod(cursor, targets.size());
                 break;
             case RANDOM:
             default:
                 idx = rr.nextInt(targets.size());
                 break;
         }
-        GameObject target = targets.get(idx);
+        FlashTarget target = targets.get(idx);
         flashes.add(new FlashState(target, System.currentTimeMillis(), NoteColor.forNote(ev.note)));
     }
 }
