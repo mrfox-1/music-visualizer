@@ -53,7 +53,13 @@ public interface MusicVizConfig extends Config
     @ConfigSection(name = "Advanced", description = "Power-user settings", position = 99, closedByDefault = true)
     String advancedSection = "advancedSection";
 
-    @Range(min = 5, max = 30)
+    @Range(min = 0, max = 100)
+    @ConfigItem(keyName = "visualActivity", name = "Visual activity",
+        description = "0 disables flashes; 25 is the original density. Above 25, floor coverage grows to the entire nearby floor at 100; scenery grows to twelve objects per event. Opacity and decay stay independent.",
+        section = displaySection, position = -1)
+    default int visualActivity() { return 50; }
+
+    @Range(min = 5, max = 50)
     @ConfigItem(
         keyName = "radius",
         name = "Radius (tiles)",
@@ -93,7 +99,7 @@ public interface MusicVizConfig extends Config
     default SelectionMode selectionMode() { return SelectionMode.HASH_BY_NOTE; }
 
     @ConfigItem(keyName = "targetType", name = "Flash targets",
-        description = "Scenery, floor tiles, or one of each per note. Uses the radius and target-selection settings.",
+        description = "Scenery, floor tiles, or both per note. Visual activity controls the number of targets of each type.",
         section = displaySection, position = 4)
     default TargetType targetType() { return TargetType.SCENERY; }
 

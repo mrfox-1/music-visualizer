@@ -45,6 +45,7 @@ public class MusicVizPlugin extends Plugin
     private volatile int lastArchiveId = Integer.MIN_VALUE;
     private final Random rr = new Random();
     private int rrCursor = 0;
+    private final VisualActivity activity = new VisualActivity();
     private volatile boolean running;
     private volatile long sourceGeneration;
     private volatile PcAudioCapture pcAudio;
@@ -92,6 +93,7 @@ public class MusicVizPlugin extends Plugin
     private void stopSource()
     {
         sourceGeneration++;
+        activity.reset();
         stopPolling();
         scheduler.stop();
         if (pcAudio != null) { pcAudio.stop(); pcAudio = null; }
@@ -235,14 +237,18 @@ public class MusicVizPlugin extends Plugin
         int wantedChannel = config.melodyChannel();
         if (config.audioSource() == MusicVizConfig.AudioSource.OSRS_MIDI
             && wantedChannel >= 0 && ev.channel != wantedChannel) return;
-        int cursor = rrCursor++;
+        int count = activity.nextCount(config.visualActivity());
+        if (count == 0) return;
+        int cursor = rrCursor;
+        rrCursor += count;
         if (config.targetType() != MusicVizConfig.TargetType.FLOOR_TILES)
-            flashOne(scanner.scenery(), ev, cursor);
+            flashMany(scanner.scenery(), ev, cursor, count);
         if (config.targetType() != MusicVizConfig.TargetType.SCENERY)
-            flashOne(scanner.floors(), ev, cursor);
+            flashMany(scanner.floors(), ev, cursor,
+                VisualActivity.floorCount(config.visualActivity(), scanner.floors().size(), count));
     }
 
-    private void flashOne(List<FlashTarget> targets, NoteEvent ev, int cursor)
+    private void flashMany(List<FlashTarget> targets, NoteEvent ev, int cursor, int count)
     {
         if (targets.isEmpty()) return;
 
@@ -260,7 +266,19 @@ public class MusicVizPlugin extends Plugin
                 idx = rr.nextInt(targets.size());
                 break;
         }
-        FlashTarget target = targets.get(idx);
-        flashes.add(new FlashState(target, System.currentTimeMillis(), NoteColor.forNote(ev.note)));
+        long now = System.currentTimeMillis();
+        // A coprime stride spreads floor coverage across the scene instead of scan-order strips.
+        int stride = 1;
+        if (targets.get(0).floor != null)
+        {
+            stride = Math.max(1, (int) (targets.size() * 0.618));
+            while (java.math.BigInteger.valueOf(stride).gcd(java.math.BigInteger.valueOf(targets.size())).intValue() != 1)
+                stride++;
+        }
+        for (int i = 0; i < Math.min(count, targets.size()); i++)
+        {
+            FlashTarget target = targets.get((idx + i * stride) % targets.size());
+            flashes.add(new FlashState(target, now, NoteColor.forNote(ev.note)));
+        }
     }
 }

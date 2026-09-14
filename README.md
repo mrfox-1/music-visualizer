@@ -5,7 +5,8 @@ A RuneLite plugin that paints music onto the game world. Nearby scenery or floor
 ## PC audio and floor tiles
 
 - Select **Audio source → Source → PC audio** to visualize sound playing through the Windows default playback device. The plugin uses WASAPI loopback inside RuneLite; no microphone, recording-device selection, Stereo Mix, or companion app is required. Adjust **Audio sensitivity** and use the status overlay to check the signal level.
-- Select **Display → Flash targets → Floor tiles** or **Both**. Both triggers one scenery object and one floor tile per event. Tiles share the radius, colors, selection mode, and decay settings, with a separate **Floor tile opacity** setting (default 60).
+- Select **Display → Flash targets → Floor tiles** or **Both**. Tiles share the radius, colors, selection mode, and decay settings, with a separate **Floor tile opacity** setting (default 60).
+- **Display → Visual activity** controls density for either audio source: 0 disables flashes, 25 preserves the original one-target density, 50 (default) lights a third of nearby floor tiles and four scenery objects per event, and 100 lights the entire scanned floor and up to twelve scenery objects. Floor targets spread across the area instead of forming scan-order strips. Repeated flashes refresh a target instead of stacking opacity. Radius now extends to 50 tiles; opacity and decay remain independent controls. Whole-floor coverage is limited to loaded tiles inside that radius, and larger areas cost more rendering time.
 
 PC mode automatically reconnects when the default playback device changes. Apps explicitly routed to a different output are not included. Exclusive-mode or protected playback may not be available. OSRS music mode remains available on other platforms.
 
