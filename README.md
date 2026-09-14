@@ -29,6 +29,8 @@ OSRS music is MIDI-driven and deterministic. The plugin:
 
 The following describes the default Rainbow scheme:
 
+Additional presets include Jewel tones, Amethyst, Emerald, Sapphire, Ruby, Earth tones, Desert, Moss and stone, Copper and teal, Retro arcade, Synthwave, Vaporwave, Vintage, Cherry blossom, Lavender and mint, Peach and cream, Twilight, Moonlight, Citrus, and Tropical.
+
 Each flash's color comes from the MIDI note's pitch, in three steps:
 
 1. **Drop the octave.** Take `note % 12`, which collapses every octave onto the same 12-element wheel. Middle C and the C two octaves above it both hash to index 0 — that's why melodic motifs that repeat at different octaves show up as the same color cluster.
