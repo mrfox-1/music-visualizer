@@ -36,14 +36,6 @@ public interface MusicVizConfig extends Config
         @Override public String toString() { return this == PC_AUDIO ? "PC audio" : "OSRS music"; }
     }
 
-    @ConfigSection(
-        name = "Heads-up: first-song lag",
-        description = "OSRS doesn't tell us how far into a track it currently is, so the first song after enabling the plugin (or after login) starts visualizing from the MIDI's beginning — even though the audio is already partway through. Every subsequent track change resyncs automatically.",
-        position = 0,
-        closedByDefault = true
-    )
-    String noticeSection = "noticeSection";
-
     @ConfigSection(name = "Display", description = "Visual options", position = 1)
     String displaySection = "displaySection";
 

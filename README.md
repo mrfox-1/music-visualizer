@@ -39,6 +39,8 @@ This mapping is sometimes called a **chromatic circle** and has a long history i
 
 ## Sync
 
+When OSRS MIDI mode starts partway through a song, flashes start from the MIDI's beginning because the current playback position is unavailable. The next track change resyncs automatically. This limitation does not apply to PC audio capture.
+
 A `Sync offset (ms)` slider lets you nudge the OSRS MIDI visualization forward or backward to match what you hear. Each new track resyncs automatically. MIDI channel selection and MIDI sync offset do not apply to PC audio.
 
 ## Development
