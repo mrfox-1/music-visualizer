@@ -267,7 +267,7 @@ public class MusicVizPlugin extends Plugin
                 break;
         }
         long now = System.currentTimeMillis();
-        java.awt.Color color = config.colorScheme().forNote(ev.note, config.customColor());
+        java.awt.Color color = config.colorScheme().forNote(ev.note, config.customColor(), config.customColorEnd());
         // A coprime stride spreads floor coverage across the scene instead of scan-order strips.
         int stride = 1;
         if (targets.get(0).floor != null)

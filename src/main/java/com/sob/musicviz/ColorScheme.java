@@ -31,7 +31,7 @@ public enum ColorScheme
     BI_PRIDE("Flag: bi pride", 0xD60270, 0x9B4F96, 0x3560CE),
     PAN_PRIDE("Flag: pan pride", 0xFF218C, 0xFFD800, 0x21B1FF),
     MONOCHROME("Monochrome", 0xB8C4D0),
-    CUSTOM("Custom color");
+    CUSTOM("Custom gradient");
 
     private final String label;
     private final Color[] colors;
@@ -43,10 +43,17 @@ public enum ColorScheme
         for (int i = 0; i < rgb.length; i++) colors[i] = new Color(rgb[i]);
     }
 
-    Color forNote(int note, Color custom)
+    Color forNote(int note, Color custom, Color customEnd)
     {
         if (this == RAINBOW) return NoteColor.forNote(note);
-        if (this == CUSTOM) return new Color(custom.getRed(), custom.getGreen(), custom.getBlue());
+        if (this == CUSTOM)
+        {
+            float blend = Math.floorMod(note, 12) / 11f;
+            return new Color(
+                Math.round(custom.getRed() + (customEnd.getRed() - custom.getRed()) * blend),
+                Math.round(custom.getGreen() + (customEnd.getGreen() - custom.getGreen()) * blend),
+                Math.round(custom.getBlue() + (customEnd.getBlue() - custom.getBlue()) * blend));
+        }
         return colors[Math.floorMod(note, 12) * colors.length / 12];
     }
 

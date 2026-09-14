@@ -25,7 +25,7 @@ OSRS music is MIDI-driven and deterministic. The plugin:
 
 ## Colors
 
-**Display → Color scheme** selects Rainbow (the original pitch wheel), Ocean, Sunset, Aurora, Ember, Pastel, Forest, Ice, Neon, Autumn, Rose gold, Monochrome, complementary color pairs, or flag-inspired palettes. Flag presets include red/white/blue, Ukraine, Ireland, Italy, France, Canada/Japan, Brazil, rainbow pride, trans pride, bi pride, and pan pride. These use recognizable flag colors rather than drawing flag patterns. **Custom color** provides a single chosen color. All schemes work with both audio sources and target types, and preserve the separate floor/scenery opacity settings. New flashes use the selected scheme immediately.
+**Display → Color scheme** selects Rainbow (the original pitch wheel), Ocean, Sunset, Aurora, Ember, Pastel, Forest, Ice, Neon, Autumn, Rose gold, Monochrome, complementary color pairs, or flag-inspired palettes. Flag presets include red/white/blue, Ukraine, Ireland, Italy, France, Canada/Japan, Brazil, rainbow pride, trans pride, bi pride, and pan pride. These use recognizable flag colors rather than drawing flag patterns. **Custom gradient** blends between your chosen **Custom gradient start** and **Custom gradient end** colors across the twelve pitch classes. Set both endpoints to the same color for a solid color. All schemes work with both audio sources and target types, and preserve the separate floor/scenery opacity settings. New flashes use the selected scheme immediately.
 
 The following describes the default Rainbow scheme:
 

@@ -106,10 +106,15 @@ public interface MusicVizConfig extends Config
         section = displaySection, position = 6)
     default ColorScheme colorScheme() { return ColorScheme.RAINBOW; }
 
-    @ConfigItem(keyName = "customColor", name = "Custom color",
-        description = "Flash color when Color scheme is Custom color. Opacity is controlled separately.",
+    @ConfigItem(keyName = "customColor", name = "Custom gradient start",
+        description = "First color of the Custom gradient. Pitch selects shades between the endpoints. Opacity is controlled separately.",
         section = displaySection, position = 7)
     default java.awt.Color customColor() { return new java.awt.Color(0x38C8D9); }
+
+    @ConfigItem(keyName = "customColorEnd", name = "Custom gradient end",
+        description = "Last color of the Custom gradient. Set both endpoints to the same color for a solid color.",
+        section = displaySection, position = 8)
+    default java.awt.Color customColorEnd() { return new java.awt.Color(0xBF68DE); }
 
     enum TargetType
     {
