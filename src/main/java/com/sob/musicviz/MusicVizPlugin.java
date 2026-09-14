@@ -267,6 +267,7 @@ public class MusicVizPlugin extends Plugin
                 break;
         }
         long now = System.currentTimeMillis();
+        java.awt.Color color = config.colorScheme().forNote(ev.note, config.customColor());
         // A coprime stride spreads floor coverage across the scene instead of scan-order strips.
         int stride = 1;
         if (targets.get(0).floor != null)
@@ -278,7 +279,7 @@ public class MusicVizPlugin extends Plugin
         for (int i = 0; i < Math.min(count, targets.size()); i++)
         {
             FlashTarget target = targets.get((idx + i * stride) % targets.size());
-            flashes.add(new FlashState(target, now, NoteColor.forNote(ev.note)));
+            flashes.add(new FlashState(target, now, color));
         }
     }
 }

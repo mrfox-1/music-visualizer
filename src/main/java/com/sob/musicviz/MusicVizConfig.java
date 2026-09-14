@@ -109,6 +109,16 @@ public interface MusicVizConfig extends Config
         section = displaySection, position = 5)
     default int floorAlpha() { return 60; }
 
+    @ConfigItem(keyName = "colorScheme", name = "Color scheme",
+        description = "Palette for floor and scenery flashes. Pitch selects a color within the palette.",
+        section = displaySection, position = 6)
+    default ColorScheme colorScheme() { return ColorScheme.RAINBOW; }
+
+    @ConfigItem(keyName = "customColor", name = "Custom color",
+        description = "Flash color when Color scheme is Custom color. Opacity is controlled separately.",
+        section = displaySection, position = 7)
+    default java.awt.Color customColor() { return new java.awt.Color(0x38C8D9); }
+
     enum TargetType
     {
         SCENERY, FLOOR_TILES, BOTH;
